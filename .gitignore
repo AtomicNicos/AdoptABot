@@ -1,0 +1,8 @@
+# API Key
+./.env
+
+# Ordering and guild id's
+./order.yaml
+order.yaml
+.env
+.vscode
