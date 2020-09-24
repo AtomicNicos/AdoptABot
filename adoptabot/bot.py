@@ -21,7 +21,6 @@ def load_file():
     file.close()
     return (data['guild_id'], {[*a.keys()][0]: [*a.values()][0] for a in data['ordering']})
 
-
 # ID OF THE "Adopt A Skill 2020" DISCORD SERVER
 # ORDER OF PASSAGE (ENTERPRISE_CHANNEL_ID : List[USER_MEMBER_ID])
 GUILD_ID, ORDERING = load_file()
@@ -38,18 +37,32 @@ WAIT = 1 * 60
 # ALERT TIME
 ALERT = 1
 
+# WAIT VOICE CHANNEL NAME
+WAIT_CHANNEL_NAME = "Salle d'attente"
+
+# GENERAL ANNOUNCEMENTS TEXT CHANNEL NAME
+ANNOUNCEMENTS_CHANNEL_NAME = "annonces"
+
+# BOTSPAM CHANNEL NAME
+BOTSPAM_CHANNEL_NAME = "botspam"
+
+# Client
 client = discord.Client()
 
-global wait_channel, voice_channels, announce_channel, members, participants, guild, running
+global guild, enterprise_channels, voice_channels, wait_channel_name, announce_channel_name, botspam_channel_name, announce_channel, wait_channel, participants, running
 
 guild = None
 enterprise_channels, voice_channels = [], []
+wait_channel_name, announce_channel_name, botspam_channel_name = WAIT_CHANNEL_NAME, ANNOUNCEMENTS_CHANNEL_NAME, BOTSPAM_CHANNEL_NAME
 announce_channel, wait_channel = None, None
-members, participants = [], []
+participants = []
 running = False
 
+"""
+Loops through interviews, at start value = 0
+"""
 async def loop(start = 0, message = None):
-    global wait_channel, voice_channels, announce_channel, members, participants, guild, running
+    global guild, announce_channel, wait_channel, participants
     for r in range(start, ROUNDS):
         print(f'\n\nINTERVIEW ROUND {r}')
         await message.channel.send(f'ROUND {r + 1} / {ROUNDS}')
@@ -88,7 +101,7 @@ async def loop(start = 0, message = None):
 
 @client.event
 async def on_message(message):
-    global wait_channel, voice_channels, announce_channel, members, participants, guild, running
+    global botspam_channel_name, running
     if message.author == client.user:
         return
 
@@ -105,7 +118,7 @@ async def on_message(message):
             if counter < n:
                 await x.delete()
                 counter += 1        
-    elif message.content.startswith('$') and message.channel.name != 'botspam':
+    elif message.content.startswith('$') and message.channel.name != botspam_channel_name:
         await message.channel.send('Please use channel <#758653291093032961> for all bot related activities! (<@&758595404983697419>)')
     elif message.content.startswith('$start'):
         if not running:
@@ -128,7 +141,7 @@ async def on_message(message):
 
 @client.event
 async def on_ready():
-    global wait_channel, voice_channels, announce_channel, members, participants, guild, running
+    global guild, enterprise_channels, voice_channels, wait_channel_name, announce_channel_name, announce_channel, wait_channel, participants
     
     print(f'{client.user} has connected to Discord!\n')
     
@@ -137,17 +150,16 @@ async def on_ready():
     
     voice_channels = list(guild.voice_channels)
 
-    announce_channel = list(filter(lambda x: 'annonces' in x.name, guild.text_channels))[0]
+    announce_channel = list(filter(lambda x: announce_channel_name in x.name, guild.text_channels))[0]
 
-    enterprise_channels = list(filter(lambda x: 'attente' not in x.name, voice_channels))
-    wait_channel = list(filter(lambda x: 'attente' in x.name, voice_channels))[0]
+    enterprise_channels = list(filter(lambda x: wait_channel_name not in x.name, voice_channels))
+    wait_channel = list(filter(lambda x: wait_channel_name in x.name, voice_channels))[0]
 
     print(f'There are [{len(enterprise_channels)} enterprise] | [1 waiting] voice channels')
 
-    members = guild.members
-    participants = list(map(lambda a: a[0],filter(lambda y: "Participants" in list(map(lambda z: z.name,y[1])),map(lambda x: (x, x.roles),members))))
+    participants = list(map(lambda a: a[0],filter(lambda y: "Participants" in list(map(lambda z: z.name,y[1])),map(lambda x: (x, x.roles), guild.members))))
 
     print('\nAll of the members')
-    pprint(list(map(lambda m: f'{m.id} : {m.name}', members)))
+    pprint(list(map(lambda m: f'{m.id} : {m.name}', guild.members)))
     
 client.run(TOKEN)
