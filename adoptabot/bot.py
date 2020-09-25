@@ -65,7 +65,7 @@ async def loop(start = 0, message = None):
     global guild, announce_channel, wait_channel, participants
     for r in range(start, ROUNDS):
         print(f'\n\nINTERVIEW ROUND {r}')
-        await message.channel.send(f'ROUND {r + 1} / {ROUNDS}')
+        await message.channel.send(f'ROUND {r + 1}/{ROUNDS}')
 
         assignment = list(map(lambda z: (guild.get_channel(z[0]), guild.get_member(z[1])), filter(lambda y: y[1] != -1, map(lambda x: (x[0], x[1][r]), ORDERING.items()))))
 
@@ -77,7 +77,7 @@ async def loop(start = 0, message = None):
                 print(f'{user} is not connected to voice.')
                 pass
         
-        await asyncio.sleep(TIME / 60 - ALERT)
+        await asyncio.sleep(TIME - ALERT)
         
         await announce_channel.send(f'@everyone Round {r+1}/{ROUNDS} finishes in {ALERT} seconds !')
         await asyncio.sleep(ALERT)
@@ -86,7 +86,7 @@ async def loop(start = 0, message = None):
         await message.channel.send('INTER-ROUND BREAK')
 
         if r != ROUNDS - 1:
-            await announce_channel.send(f'@everyone Round {r+1} will begin in {WAIT / 20} seconds.')
+            await announce_channel.send(f'@everyone Round {r+1} will begin in {WAIT} seconds.')
         
         for user in participants:
             try:
@@ -95,31 +95,42 @@ async def loop(start = 0, message = None):
             except discord.errors.HTTPException:
                 print(f'{user} is not connected to voice.')
                 pass
-        await asyncio.sleep(WAIT / 20)
-
+        await asyncio.sleep(WAIT)
 
 
 @client.event
 async def on_message(message):
-    global botspam_channel_name, running
+    global botspam_channel_name, running, participants
     if message.author == client.user:
         return
 
     if message.content.startswith('$prune'):
+        if message.author.name != "AtomicNicos":
+            await message.channel.send('You are not allowed to use this command! (<@&758595404983697419>)')
+            return
         argv = message.content.split(' ')
-        n = 20
+        n = 21
         if len(argv) > 1:
             try: 
-                n = int(argv[1])
+                n = int(argv[1]) + 1
             except:
                 n = 20
         counter = 0
         async for x in message.channel.history(limit= n):
             if counter < n:
                 await x.delete()
-                counter += 1        
+                counter += 1   
     elif message.content.startswith('$') and message.channel.name != botspam_channel_name:
         await message.channel.send('Please use channel <#758653291093032961> for all bot related activities! (<@&758595404983697419>)')
+    elif message.content.startswith('$recall'):
+        for user in participants:
+            try:
+                await user.move_to(wait_channel)
+                print(f'Moved {user} back to "{wait_channel}"')
+            except discord.errors.HTTPException:
+                print(f'{user} is not connected to voice.')
+                pass
+        running = False
     elif message.content.startswith('$start'):
         if not running:
             argv = message.content.split(' ')
