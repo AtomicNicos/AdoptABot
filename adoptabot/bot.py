@@ -26,13 +26,16 @@ def load_file():
 GUILD_ID, ORDERING = load_file()
 
 # NUMBER OF INTERVIEW ROUNDS
-ROUNDS = 2
+ROUNDS = 14
 
 # TIME OF EACH ROUND
 TIME = 5 * 60
 
 # WAITING PERIOD BETWEEN ROUNDS
 WAIT = 1 * 60
+
+# WHETHER @everyone should be called
+SHOULD_ALERT = True;
 
 # ALERT TIME
 ALERT = 1
@@ -58,6 +61,41 @@ announce_channel, wait_channel = None, None
 participants = []
 running = False
 
+async def prune(message = 0):
+    argv = message.content.split(' ')
+    n = 20
+    if len(argv) > 1:
+        try: 
+            n = int(argv[1])
+        except:
+            n = 20
+    counter = 0
+    async for x in message.channel.history(limit= n):
+        if counter < n:
+            await x.delete()
+            counter += 1 
+
+async def startRounds(message = 0):
+    global running
+    if not running:
+        argv = message.content.split(' ')
+        start = 0
+        if len(argv) > 1:
+            try: 
+                start = int(argv[1])
+            except:
+                start = 0
+        running = True
+        if not (-1 < start < ROUNDS):
+            await message.channel.send(f'Value is not a valid round (0 <= {start} < {ROUNDS}, starting at 0)')
+        else:
+            await message.channel.send(f'Starting at round {start}')
+            await loop(start, message)
+        running = False
+    else:
+        await message.channel.send('Loop has already started')
+
+
 """
 Loops through interviews, at start value = 0
 """
@@ -79,14 +117,14 @@ async def loop(start = 0, message = None):
         
         await asyncio.sleep(TIME / 60 - ALERT)
         
-        await announce_channel.send(f'@everyone Round {r+1}/{ROUNDS} finishes in {ALERT} seconds !')
+        await announce_channel.send(f'{"@everyone " if SHOULD_ALERT else ""}Round {r+1}/{ROUNDS} finishes in {ALERT} seconds !')
         await asyncio.sleep(ALERT)
         
         print('\nBREAK')
         await message.channel.send('INTER-ROUND BREAK')
 
         if r != ROUNDS - 1:
-            await announce_channel.send(f'@everyone Round {r+1} will begin in {WAIT / 20} seconds.')
+            await announce_channel.send(f'{"@everyone " if SHOULD_ALERT else ""}Round {r+1} will begin in {WAIT / 20} seconds.')
         
         for user in participants:
             try:
@@ -106,38 +144,12 @@ async def on_message(message):
         return
 
     if message.content.startswith('$prune'):
-        argv = message.content.split(' ')
-        n = 20
-        if len(argv) > 1:
-            try: 
-                n = int(argv[1])
-            except:
-                n = 20
-        counter = 0
-        async for x in message.channel.history(limit= n):
-            if counter < n:
-                await x.delete()
-                counter += 1        
+        await prune(message)
     elif message.content.startswith('$') and message.channel.name != botspam_channel_name:
         await message.channel.send('Please use channel <#758653291093032961> for all bot related activities! (<@&758595404983697419>)')
     elif message.content.startswith('$start'):
-        if not running:
-            argv = message.content.split(' ')
-            start = 0
-            if len(argv) > 1:
-                try: 
-                    start = int(argv[1])
-                except:
-                    start = 0
-            running = True
-            if not (-1 < start < ROUNDS):
-                await message.channel.send(f'Value is not a valid round (0 <= {start} < {ROUNDS}, starting at 0)')
-            else:
-                await message.channel.send(f'Starting at round {start}')
-                await loop(start, message)
-            running = False
-        else:
-            await message.channel.send('Loop has already started')
+        await startRounds(message)
+
 
 @client.event
 async def on_ready():
@@ -161,5 +173,6 @@ async def on_ready():
 
     print('\nAll of the members')
     pprint(list(map(lambda m: f'{m.id} : {m.name}', guild.members)))
+
     
 client.run(TOKEN)
