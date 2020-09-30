@@ -6,3 +6,6 @@
 order.yaml
 .env
 .vscode
+*.rar
+*/__pycache__
+adoptabot/extensions/__pycache__

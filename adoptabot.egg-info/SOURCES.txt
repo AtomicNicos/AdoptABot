@@ -1,10 +1,10 @@
-README.rst
+README.md
 setup.py
-adoptabot/__init__.py
+adoptabot/bot-ext.py
 adoptabot/bot.py
-adoptabot/order.json
 adoptabot.egg-info/PKG-INFO
 adoptabot.egg-info/SOURCES.txt
 adoptabot.egg-info/dependency_links.txt
 adoptabot.egg-info/requires.txt
 adoptabot.egg-info/top_level.txt
+adoptabot/extensions/basic.py
