@@ -40,8 +40,7 @@ class Basic(commands.Cog):
         async for x in ctx.message.channel.history(limit= n):
             if counter < n:
                 await x.delete()
-                counter += 1 
-            
+                counter += 1
 
 def setup(bot):
     bot.add_cog(Basic(bot))

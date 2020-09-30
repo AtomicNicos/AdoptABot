@@ -3,7 +3,10 @@ import os
 import asyncio
 from pprint import pprint
 
-import discord
+import sys
+from discord.ext import commands
+from adoptabot.utils import registry as ext_registry
+from adoptabot.extensions import event as ext_event
 
 from dotenv import load_dotenv
 from yaml import load, dump
@@ -12,8 +15,24 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
+import signal
+
+def handler(signum, frame):
+    loop = True
+    while(loop):
+        res = input('Shutdown bot ? [Y/n] ?> ')
+        if (res in ['y', 'Y', 'yes', 'Yes']):
+            loop = False
+            registry.close()
+            sys.exit()
+        elif (res in ['n', 'N', 'No', 'no']):
+            loop = False
+
+
+signal.signal(signal.SIGINT, handler)
+
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
+TOKEN = os.getenv('DISCORD_TOKEN2')
 OWNER_ID = int(os.getenv('OWNER_ID'))
 
 def load_file():
@@ -22,21 +41,20 @@ def load_file():
     file.close()
     return (data['guild_id'], {[*a.keys()][0]: [*a.values()][0] for a in data['ordering']})
 
-from discord.ext import commands
 
 def get_prefix(client, message):
-    prefixes = ['¬']
+    prefixes = ['>']
     return commands.when_mentioned_or(*prefixes)(client, message)
 
 bot = commands.Bot(
     command_prefix=get_prefix,
-    description='The AdoptASkill 2020 matchmaker bot',
+    description='A bot to organise planned or randomized meetings, among groups for new friendships, new romances or new employment opportunities.',
     owner_id=OWNER_ID,
     case_insensitive=False
 )
 
 extensions = ['extensions.basic']
-
+registry = ext_registry.Registry()
 
 @bot.event
 async def on_ready():
@@ -44,6 +62,8 @@ async def on_ready():
     bot.remove_command('help')
     for extension in extensions:
         bot.load_extension(extension)
+    bot.add_cog(ext_event.Event(bot=bot, registry=registry))
+    bot.add_cog(ext_registry.RegistryVisible(bot=bot, registry=registry))
     return
 
 bot.run(TOKEN, bot=True, reconnect=True)
@@ -93,19 +113,6 @@ async def prune(message = 0):
     if message.author.name != "AtomicNicos":
         await message.channel.send('You are not allowed to use this command! (<@&758595404983697419>)')
         return
-
-    argv = message.content.split(' ')
-    n = 21
-    if len(argv) > 1:
-        try: 
-            n = int(argv[1]) + 1
-        except:
-            n = 21
-    counter = 0
-    async for x in message.channel.history(limit= n):
-        if counter < n:
-            await x.delete()
-            counter += 1 
 
 async def startRounds(message = 0):
     global running

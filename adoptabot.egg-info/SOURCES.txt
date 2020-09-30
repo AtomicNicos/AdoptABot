@@ -8,3 +8,5 @@ adoptabot.egg-info/dependency_links.txt
 adoptabot.egg-info/requires.txt
 adoptabot.egg-info/top_level.txt
 adoptabot/extensions/basic.py
+adoptabot/extensions/voice.py
+adoptabot/utils/registry.py

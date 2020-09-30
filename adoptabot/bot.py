@@ -99,6 +99,8 @@ async def startRounds(message = 0):
     else:
         await message.channel.send('Loop has already started')
 
+        
+
 async def recall(message = 0):
     global participants, wait_channel, running
     for user in participants:
