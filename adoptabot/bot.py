@@ -4,6 +4,7 @@ import asyncio
 from pprint import pprint
 
 import discord
+from discord.utils import get
 
 from dotenv import load_dotenv
 from yaml import load, dump
@@ -134,9 +135,9 @@ async def reload(message = 0):
     participants = list(map(lambda a: a[0],filter(lambda y: "Participants" in list(map(lambda z: z.name,y[1])),map(lambda x: (x, x.roles), members))))
 
     print('\nAll of the members')
-    f = copen('res/membs.txt', mode='w', encoding='utf-8')
-    a = {f'{m.id}': m.nick if m.nick is not None else m.name for m in members}
-    json.dump(a, f)
+    f = copen('res/membs.json', mode='w', encoding='utf-8')
+    a = {f'{m.id}': m.nick if m.nick is not None else m.name for m in participants}
+    json.dump(a, f, indent=4, sort_keys=True)
     f.close()
 
 async def assign_roles(message = 0):
@@ -145,7 +146,6 @@ async def assign_roles(message = 0):
         return
 
     global members, guild
-    from discord.utils import get
     role = get(guild.roles, id=758591394922627092)
     print(role)
 
