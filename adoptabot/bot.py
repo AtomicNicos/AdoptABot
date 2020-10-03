@@ -19,7 +19,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 def load_file():
-    file = open('order.yaml', 'r')
+    file = open('res/order.yaml', 'r')
     data = load(file, Loader=Loader)
     file.close()
     return (data['guild_id'], {[*a.keys()][0]: [*a.values()][0] for a in data['ordering']})
@@ -64,6 +64,9 @@ announce_channel, wait_channel = None, None
 participants, members = [], []
 running = False
 
+"""
+
+"""
 async def prune(message = 0):
     if message.author.name != "AtomicNicos":
         await message.channel.send('You are not allowed to use this command! (<@&758595404983697419>)')
@@ -82,6 +85,9 @@ async def prune(message = 0):
             await x.delete()
             counter += 1 
 
+"""
+
+"""
 async def startRounds(message = 0):
     global running
     if not running:
@@ -102,7 +108,9 @@ async def startRounds(message = 0):
     else:
         await message.channel.send('Loop has already started')
 
+"""
 
+"""
 async def recall(message = 0):
     global participants, wait_channel, running
     for user in participants:
@@ -133,6 +141,7 @@ async def reload(message = 0):
 
     members = list(guild.members)
     participants = list(map(lambda a: a[0],filter(lambda y: "Participants" in list(map(lambda z: z.name,y[1])),map(lambda x: (x, x.roles), members))))
+    enterprises = list(map(lambda a: a[0],filter(lambda y: "Entreprise" in list(map(lambda z: z.name,y[1])),map(lambda x: (x, x.roles), members))))
 
     print('\nAll of the members')
     f = copen('res/membs.json', mode='w', encoding='utf-8')
@@ -140,6 +149,13 @@ async def reload(message = 0):
     json.dump(a, f, indent=4, sort_keys=True)
     f.close()
 
+    print(len(members))
+    print(len(participants))
+    print(len(enterprises))
+
+"""
+
+"""
 async def assign_roles(message = 0):
     if message.author.name != "AtomicNicos":
         await message.channel.send('You are not allowed to use this command! (<@&758595404983697419>)')
