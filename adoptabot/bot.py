@@ -5,6 +5,7 @@ from pprint import pprint
 
 import discord
 from discord.utils import get
+from discord import AuditLogAction, AuditLogEntry
 
 from dotenv import load_dotenv
 from yaml import load, dump
@@ -18,11 +19,13 @@ except ImportError:
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
+
 def load_file():
     file = open('res/order.yaml', 'r')
     data = load(file, Loader=Loader)
     file.close()
     return (data['guild_id'], {[*a.keys()][0]: [*a.values()][0] for a in data['ordering']})
+
 
 # ID OF THE "Adopt A Skill 2020" DISCORD SERVER
 # ORDER OF PASSAGE (ENTERPRISE_CHANNEL_ID : List[USER_MEMBER_ID])
@@ -38,10 +41,10 @@ TIME = 5 * 60
 WAIT = 1 * 60
 
 # WHETHER @everyone should be called
-SHOULD_ALERT = True;
+SHOULD_ALERT = True
 
 # ALERT TIME
-ALERT = 1
+ALERT = 30
 
 # WAIT VOICE CHANNEL NAME
 WAIT_CHANNEL_NAME = "Salle d'attente"
@@ -67,7 +70,9 @@ running = False
 """
 
 """
-async def prune(message = 0):
+
+
+async def prune(message=0):
     if message.author.name != "AtomicNicos":
         await message.channel.send('You are not allowed to use this command! (<@&758595404983697419>)')
         return
@@ -75,26 +80,42 @@ async def prune(message = 0):
     argv = message.content.split(' ')
     n = 21
     if len(argv) > 1:
-        try: 
+        try:
             n = int(argv[1]) + 1
         except:
             n = 21
     counter = 0
-    async for x in message.channel.history(limit= n):
+    async for x in message.channel.history(limit=n):
         if counter < n:
             await x.delete()
-            counter += 1 
+            counter += 1
 
 """
 
 """
-async def startRounds(message = 0):
+async def save_audit_logs(guild):
+    with open(f'audit_logs_{guild.name}.txt', 'w+') as f:
+        i = 0
+        async for entry in guild.audit_logs(limit=4000):
+            print(entry)
+            f.write(f'{entry}' + '\n')
+            if (entry.action == AuditLogAction.member_move):
+                pass
+                #f.write('{0.user} {0.action} to {0.target}\n'.format(entry))
+            i += 1
+            if (i % 100 == 0):
+                print(i)
+    print("done")
+
+
+
+async def startRounds(message=0):
     global running
     if not running:
         argv = message.content.split(' ')
         start = 0
         if len(argv) > 1:
-            try: 
+            try:
                 start = int(argv[1])
             except:
                 start = 0
@@ -111,7 +132,9 @@ async def startRounds(message = 0):
 """
 
 """
-async def recall(message = 0):
+
+
+async def recall(message=0):
     global participants, wait_channel, running
     for user in participants:
         try:
@@ -122,7 +145,8 @@ async def recall(message = 0):
             pass
     running = False
 
-async def reload(message = 0):
+
+async def reload(message=0):
     if message != 0:
         if message.author.name != "AtomicNicos":
             await message.channel.send('You are not allowed to use this command! (<@&758595404983697419>)')
@@ -132,31 +156,39 @@ async def reload(message = 0):
 
     voice_channels = list(guild.voice_channels)
 
-    announce_channel = list(filter(lambda x: announce_channel_name in x.name, guild.text_channels))[0]
+    announce_channel = list(
+        filter(lambda x: announce_channel_name in x.name, guild.text_channels))[0]
 
-    enterprise_channels = list(filter(lambda x: wait_channel_name not in x.name, voice_channels))
-    wait_channel = list(filter(lambda x: wait_channel_name in x.name, voice_channels))[0]
+    enterprise_channels = list(
+        filter(lambda x: wait_channel_name not in x.name, voice_channels))
+    wait_channel = list(
+        filter(lambda x: wait_channel_name in x.name, voice_channels))[0]
 
-    print(f'There are [{len(enterprise_channels)} enterprise] | [1 waiting] voice channels')
+    print(
+        f'There are [{len(enterprise_channels)} enterprise] | [1 waiting] voice channels')
 
     members = list(guild.members)
-    participants = list(map(lambda a: a[0],filter(lambda y: "Participants" in list(map(lambda z: z.name,y[1])),map(lambda x: (x, x.roles), members))))
-    enterprises = list(map(lambda a: a[0],filter(lambda y: "Entreprise" in list(map(lambda z: z.name,y[1])),map(lambda x: (x, x.roles), members))))
+    participants = list(map(lambda a: a[0], filter(lambda y: "Participants" in list(
+        map(lambda z: z.name, y[1])), map(lambda x: (x, x.roles), members))))
+    enterprises = list(map(lambda a: a[0], filter(lambda y: "Entreprise" in list(
+        map(lambda z: z.name, y[1])), map(lambda x: (x, x.roles), members))))
 
-    print('\nAll of the members')
     f = copen('res/membs.json', mode='w', encoding='utf-8')
     a = {f'{m.id}': m.nick if m.nick is not None else m.name for m in participants}
     json.dump(a, f, indent=4, sort_keys=True)
     f.close()
 
-    print(len(members))
-    print(len(participants))
-    print(len(enterprises))
+    print('\nAll of the members')
+    print(f'Members #: {len(members)}')
+    print(f'Participants #: {len(participants)}')
+    print(f'Enterprises #: {len(enterprises)}')
 
 """
 
 """
-async def assign_roles(message = 0):
+
+
+async def assign_roles(message=0):
     if message.author.name != "AtomicNicos":
         await message.channel.send('You are not allowed to use this command! (<@&758595404983697419>)')
         return
@@ -170,7 +202,7 @@ async def assign_roles(message = 0):
             if role not in p.roles:
                 print(f'{p.nick} | {p.name} gets role {role}')
                 await p.add_roles(role)
-        
+
         elif p.nick != None:
             if p.nick.startswith('ETU'):
                 if role not in p.roles:
@@ -178,17 +210,20 @@ async def assign_roles(message = 0):
                     await p.add_roles(role)
 
 
-
 """
 Loops through interviews, at start value = 0
 """
-async def loop(start = 0, message = None):
+
+
+async def loop(start=0, message=None):
     global guild, announce_channel, wait_channel, participants
     for r in range(start, ROUNDS):
         print(f'\n\nINTERVIEW ROUND {r}')
+        await announce_channel.send(f'{"@everyone " if SHOULD_ALERT else ""} Round {r+1} begins now.')
         await message.channel.send(f'ROUND {r + 1}/{ROUNDS}')
 
-        assignment = list(map(lambda z: (guild.get_channel(z[0]), guild.get_member(z[1])), filter(lambda y: y[1] != -1, map(lambda x: (x[0], x[1][r]), ORDERING.items()))))
+        assignment = list(map(lambda z: (guild.get_channel(z[0]), guild.get_member(z[1])), filter(
+            lambda y: y[1] != -1, map(lambda x: (x[0], x[1][r]), ORDERING.items()))))
 
         for room, user in assignment:
             try:
@@ -197,24 +232,26 @@ async def loop(start = 0, message = None):
             except discord.errors.HTTPException:
                 print(f'{user} is not connected to voice.')
                 pass
-        
+
         await asyncio.sleep(TIME - ALERT)
-        
+
         await announce_channel.send(f'{"@everyone " if SHOULD_ALERT else ""}Round {r+1}/{ROUNDS} finishes in {ALERT} seconds !')
         await asyncio.sleep(ALERT)
-        
+
         print('\nBREAK')
         await message.channel.send('INTER-ROUND BREAK')
 
         if r != ROUNDS - 1:
-            await announce_channel.send(f'{"@everyone " if SHOULD_ALERT else ""}Round {r+1} will begin in {WAIT / 20} seconds.')
-        
+            await announce_channel.send(f'{"@everyone " if SHOULD_ALERT else ""}Round {r+2} will begin in {WAIT} seconds.')
+
         for user in participants:
             try:
                 await user.move_to(wait_channel)
                 print(f'Moved {user} back to "{wait_channel}"')
             except discord.errors.HTTPException:
                 print(f'{user} is not connected to voice.')
+                pass
+            except:
                 pass
         await asyncio.sleep(WAIT)
 
@@ -236,17 +273,21 @@ async def on_message(message):
         await startRounds(message)
     elif message.content.startswith('$reload'):
         await reload(message)
+        
+    elif message.content.startswith('$audit'):
+        await save_audit_logs(message.channel.guild)
+
 
 @client.event
 async def on_ready():
     global guild, enterprise_channels, voice_channels, wait_channel_name, announce_channel_name, announce_channel, wait_channel, participants
-    
+
     print(f'{client.user} has connected to Discord!\n')
-    
+
     guild = client.get_guild(GUILD_ID)
     print(f'{client.user} is active on {guild.name}! ({guild.member_count - 1} members)')
-    
+
     await reload()
 
-    
+
 client.run(TOKEN)
